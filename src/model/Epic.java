@@ -1,3 +1,5 @@
+package model;
+
 import java.util.ArrayList;
 
 public class Epic extends Task {
@@ -24,7 +26,7 @@ public class Epic extends Task {
         subTaskIds.clear();
     }
 
-    public ArrayList<SubTask> getSubTasks (int epicId) {
+    public ArrayList<SubTask> getSubTasks(int epicId) {
         return new ArrayList<>();
     }
 }

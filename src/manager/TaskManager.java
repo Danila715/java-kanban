@@ -1,10 +1,14 @@
+package manager;
+
+import model.*;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class TaskManager {
     private final HashMap<Integer, Epic> epics = new HashMap<>();
     private final HashMap<Integer, SubTask> subTasks = new HashMap<>();
-    private HashMap<Integer, Task> tasks = new HashMap<>();
+    private final HashMap<Integer, Task> tasks = new HashMap<>();
     private int nextId = 1;
 
     /*Создание задачи*/
