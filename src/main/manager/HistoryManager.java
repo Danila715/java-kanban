@@ -1,9 +1,9 @@
 package main.manager;
 
 import main.model.*;
-import java.util.ArrayList;
+import java.util.*;
 
 public interface HistoryManager {
     void add(Task task);
-    ArrayList<Task> getHistory();
+    List<Task> getHistory();
 }

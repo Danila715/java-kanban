@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.ArrayList;
+import java.util.*;
 
 public class InMemoryHistoryManagerTest {
     private InMemoryHistoryManager historyManager;
@@ -30,7 +30,7 @@ public class InMemoryHistoryManagerTest {
         historyManager.add(task2);
 
         // Проверяем, что история содержит задачи в правильном порядке и с сохраненным состоянием
-        ArrayList<Task> history = historyManager.getHistory();
+        List<Task> history = historyManager.getHistory();
         assertEquals(2, history.size(), "История должна содержать 2 задачи");
         assertEquals(originalTask1, history.get(0), "История должна сохранить исходное состояние задачи");
         assertEquals(task2, history.get(1), "История должна содержать вторую задачу");
@@ -45,7 +45,7 @@ public class InMemoryHistoryManagerTest {
         }
 
         // Проверяем, что история ограничена 10 задачами
-        ArrayList<Task> history = historyManager.getHistory();
+        List<Task> history = historyManager.getHistory();
         assertEquals(10, history.size(), "История должна быть ограничена 10 задачами");
         assertEquals(3, history.get(0).getId(), "Самая старая задача должна иметь ID 3");
         assertEquals(12, history.get(9).getId(), "Самая новая задача должна иметь ID 12");

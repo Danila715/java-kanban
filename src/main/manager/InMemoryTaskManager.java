@@ -2,14 +2,12 @@ package main.manager;
 
 import main.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
-    private final HashMap<Integer, Epic> epics = new HashMap<>();
-    private final HashMap<Integer, SubTask> subTasks = new HashMap<>();
-    private final HashMap<Integer, Task> tasks = new HashMap<>();
+    private final Map<Integer, Epic> epics = new HashMap<>();
+    private final Map<Integer, SubTask> subTasks = new HashMap<>();
+    private final Map<Integer, Task> tasks = new HashMap<>();
     private int nextId = 1;
     private final HistoryManager historyManager;
 
@@ -118,8 +116,8 @@ public class InMemoryTaskManager implements TaskManager {
 
     /*Получение списка всех подзадач эпика*/
     @Override
-    public ArrayList<SubTask> getSubTasksOfEpic(int epicId) {
-        ArrayList<SubTask> result = new ArrayList<>();
+    public List<SubTask> getSubTasksOfEpic(int epicId) {
+        List<SubTask> result = new ArrayList<>();
         Epic epic = epics.get(epicId);
         if (epic != null) {
             for (int subTaskId : epic.getSubTaskIds()) {
@@ -138,7 +136,7 @@ public class InMemoryTaskManager implements TaskManager {
             return;
         }
 
-        ArrayList<Integer> subTaskIds = epic.getSubTaskIds();
+        List<Integer> subTaskIds = epic.getSubTaskIds();
         if (subTaskIds.isEmpty()) {
             epic.setStatus(TaskStatus.NEW);
             return;
@@ -231,24 +229,24 @@ public class InMemoryTaskManager implements TaskManager {
 
     /*Получение списка всех задач*/
     @Override
-    public ArrayList<Task> getAllTasks() {
+    public List<Task> getAllTasks() {
         return new ArrayList<>(tasks.values());
     }
 
     /*Получение списка всех эпиков*/
     @Override
-    public ArrayList<Epic> getAllEpics() {
+    public List<Epic> getAllEpics() {
         return new ArrayList<>(epics.values());
     }
 
     /*Получение списка всех подзадач*/
     @Override
-    public ArrayList<SubTask> getAllSubTasks() {
+    public List<SubTask> getAllSubTasks() {
         return new ArrayList<>(subTasks.values());
     }
 
     @Override
-    public ArrayList<Task> getHistory() {
+    public List<Task> getHistory() {
         return historyManager.getHistory();
     }
 }
