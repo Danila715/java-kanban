@@ -1,6 +1,7 @@
 package main.manager;
 
 import main.model.*;
+
 import java.util.*;
 
 public class InMemoryHistoryManager implements HistoryManager {
@@ -21,7 +22,7 @@ public class InMemoryHistoryManager implements HistoryManager {
     }
 
     @Override
-    public void add (Task task) {
+    public void add(Task task) {
         if (task == null) {
             return;
         }
@@ -56,7 +57,7 @@ public class InMemoryHistoryManager implements HistoryManager {
         return list;
     }
 
-    private Node<Task> linkLast (Task task) {
+    private Node<Task> linkLast(Task task) {
         Node<Task> newNode = new Node<>(task, null, tail);
         if (tail != null) {
             tail.next = newNode;
