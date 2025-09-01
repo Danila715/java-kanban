@@ -2,7 +2,7 @@ package main.java.main.manager;
 
 import main.java.main.model.Task;
 
-import java.util.*;
+import java.util.List;
 
 public interface HistoryManager {
     void add(Task task);

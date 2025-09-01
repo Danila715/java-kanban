@@ -1,4 +1,4 @@
-package test.java.main.manager;
+package manager;
 
 import main.java.main.manager.InMemoryTaskManager;
 import main.java.main.model.Epic;

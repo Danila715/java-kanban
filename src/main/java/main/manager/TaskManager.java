@@ -5,7 +5,7 @@ import main.java.main.model.SubTask;
 import main.java.main.model.Task;
 import main.java.main.model.TaskStatus;
 
-import java.util.*;
+import java.util.List;
 
 public interface TaskManager {
     Task createTask(String title, String description, TaskStatus status);

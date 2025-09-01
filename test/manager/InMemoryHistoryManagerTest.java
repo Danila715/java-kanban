@@ -1,4 +1,4 @@
-package test.java.main.manager;
+package manager;
 
 import main.java.main.manager.InMemoryHistoryManager;
 import main.java.main.model.Task;
@@ -6,9 +6,9 @@ import main.java.main.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import java.util.List;
 
-import java.util.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class InMemoryHistoryManagerTest {
     private InMemoryHistoryManager historyManager;
