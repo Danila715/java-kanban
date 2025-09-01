@@ -188,7 +188,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     /*Обновление эпика*/
     @Override
-    public void updateEpic (Epic epic) {
+    public void updateEpic(Epic epic) {
         if (epics.containsKey(epic.getId())) {
             Epic updatedEpic = epics.get(epic.getId());
             updatedEpic.setTitle(epic.getTitle());
@@ -248,7 +248,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public List<Task> getAllTasks() {
         List<Task> result = new ArrayList<>();
-        for(Task task : tasks.values()) {
+        for (Task task : tasks.values()) {
             result.add(new Task(task));
         }
         return result;
@@ -264,7 +264,7 @@ public class InMemoryTaskManager implements TaskManager {
     @Override
     public List<SubTask> getAllSubTasks() {
         List<SubTask> result = new ArrayList<>();
-        for(SubTask subTask : subTasks.values()) {
+        for (SubTask subTask : subTasks.values()) {
             result.add(new SubTask(subTask));
         }
         return result;
