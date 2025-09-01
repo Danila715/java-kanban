@@ -13,7 +13,7 @@ public interface TaskManager {
     SubTask getSubTaskById(int id);
     void addEpic(String title, String description);
     void addSubTask(String title, String description, int epicId, TaskStatus status);
-    List<SubTask> getSubTasksOfEpic(int epicId);
+    List<SubTask> getSubTasks(int epicId);
     void updateTask(Task updatedTask);
     void updateEpic(Epic updatedEpic);
     void updateSubTask(SubTask updatedSubTask);

@@ -37,17 +37,38 @@ public class InMemoryHistoryManagerTest {
     }
 
     @Test
-    void limitsHistoryToTenTasks() {
-        // Добавляем 12 задач в историю
-        for (int i = 1; i <= 12; i++) {
-            Task task = new Task("Задача " + i, "Описание " + i, i, TaskStatus.NEW);
-            historyManager.add(task);
-        }
+    void removesDuplicatesFromHistory() {
+        //Добавляем задачу несколько раз
+        Task task = new Task("Задача", "Описание", 1, TaskStatus.NEW);
+        historyManager.add(task);
+        task.setStatus(TaskStatus.IN_PROGRESS);
+        historyManager.add(task);
+        task.setStatus(TaskStatus.DONE);
+        historyManager.add(task);
 
-        // Проверяем, что история ограничена 10 задачами
+        //Проверяем, что в истории находится только последний просмотр
         List<Task> history = historyManager.getHistory();
-        assertEquals(10, history.size(), "История должна быть ограничена 10 задачами");
-        assertEquals(3, history.get(0).getId(), "Самая старая задача должна иметь ID 3");
-        assertEquals(12, history.get(9).getId(), "Самая новая задача должна иметь ID 12");
+        assertEquals(1, history.size(), "История должна содержать только один просмотр задачи");
+        assertEquals(TaskStatus.DONE, history.get(0).getStatus(), "История должна содержать последний статус задачи");
     }
+
+    @Test
+    void removesTaskFromHistory() {
+        //Добавляем задачи в историю
+        Task task1 = new Task("Задача 1", "Описание 1", 1, TaskStatus.NEW);
+        Task task2 = new Task("Задача 2", "Описание 2", 2, TaskStatus.NEW);
+        historyManager.add(task1);
+        historyManager.add(task2);
+
+        //Удаляем первую задачу
+        historyManager.remove(1);
+
+        //Проверяем что задача удалена из истории
+        List<Task> history = historyManager.getHistory();
+        assertEquals(1, history.size(), "История должна содержать только одну задачу после удаления");
+        assertEquals(task2, history.get(0), "Вторая задача должна остаться");
+    }
+
+
+
 }
