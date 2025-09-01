@@ -1,4 +1,4 @@
-package main.model;
+package main.java.main.model;
 
 public class Task {
 

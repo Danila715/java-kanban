@@ -1,6 +1,9 @@
-package main.manager;
+package main.java.main.manager;
 
-import main.model.*;
+import main.java.main.model.Epic;
+import main.java.main.model.SubTask;
+import main.java.main.model.Task;
+import main.java.main.model.TaskStatus;
 
 import java.util.*;
 

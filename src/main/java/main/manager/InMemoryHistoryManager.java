@@ -1,6 +1,6 @@
-package main.manager;
+package main.java.main.manager;
 
-import main.model.*;
+import main.java.main.model.Task;
 
 import java.util.*;
 

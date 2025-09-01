@@ -1,6 +1,6 @@
-package main.manager;
+package main.java.main.manager;
 
-import main.model.*;
+import main.java.main.model.*;
 
 import java.util.*;
 
@@ -21,7 +21,6 @@ public class InMemoryTaskManager implements TaskManager {
         int id = nextId++;
         Task task = new Task(title, description, id, status);
         tasks.put(id, new Task(task));
-        System.out.println("Stored Task copy in tasks, id=" + id);
         return new Task(task);
     }
 
@@ -90,7 +89,6 @@ public class InMemoryTaskManager implements TaskManager {
         Task task = tasks.get(id);
         if (task != null) {
             historyManager.add(new Task(task));
-            System.out.println("Returning Task copy from getTaskById, id=" + id);
             return new Task(task);
         }
         return null;
@@ -112,7 +110,6 @@ public class InMemoryTaskManager implements TaskManager {
         SubTask subTask = subTasks.get(id);
         if (subTask != null) {
             historyManager.add(new SubTask(subTask));
-            System.out.println("Returning SubTask copy from getSubTaskById, id=" + id);
             return new SubTask(subTask);
         }
         return null;

@@ -1,9 +1,11 @@
-package test.manager;
+package test.java.main.manager;
 
-import main.manager.*;
-import main.model.*;
+import main.java.main.manager.InMemoryHistoryManager;
+import main.java.main.model.Task;
+import main.java.main.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.*;
@@ -68,7 +70,6 @@ public class InMemoryHistoryManagerTest {
         assertEquals(1, history.size(), "История должна содержать только одну задачу после удаления");
         assertEquals(task2, history.get(0), "Вторая задача должна остаться");
     }
-
 
 
 }
