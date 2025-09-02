@@ -1,6 +1,7 @@
 package manager;
 
-import main.java.main.manager.InMemoryHistoryManager;
+import main.java.main.manager.HistoryManager;
+import main.java.main.manager.Managers;
 import main.java.main.model.Task;
 import main.java.main.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,12 +12,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class InMemoryHistoryManagerTest {
-    private InMemoryHistoryManager historyManager;
+    private HistoryManager historyManager;
 
     /*Инициализируем менеджер истории перед каждым тестом*/
     @BeforeEach
     void setUp() {
-        historyManager = new InMemoryHistoryManager();
+        historyManager = Managers.getDefaultHistory();
     }
 
     @Test
