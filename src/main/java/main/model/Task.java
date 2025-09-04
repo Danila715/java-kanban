@@ -1,4 +1,4 @@
-package main.model;
+package main.java.main.model;
 
 public class Task {
 
@@ -7,12 +7,20 @@ public class Task {
     private final int id;
     private TaskStatus status;
 
-
+    //Основной конструктор
     public Task(String title, String description, int id, TaskStatus status) {
         this.title = title;
         this.description = description;
         this.id = id;
         this.status = status;
+    }
+
+    //Копирующий конструктор
+    public Task(Task copy) {
+        this.title = copy.title;
+        this.description = copy.description;
+        this.id = copy.id;
+        this.status = copy.status;
     }
 
     public String getTitle() {

@@ -1,9 +1,14 @@
-package test.manager;
+package manager;
 
-import main.manager.*;
-import main.model.*;
+import main.java.main.manager.HistoryManager;
+import main.java.main.manager.Managers;
+import main.java.main.manager.TaskManager;
+import main.java.main.model.Task;
+import main.java.main.model.TaskStatus;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class ManagersTest {
     @Test

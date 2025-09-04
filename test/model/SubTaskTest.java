@@ -1,9 +1,11 @@
-package test.model;
+package model;
 
-import main.model.*;
-
+import main.java.main.model.SubTask;
+import main.java.main.model.TaskStatus;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 public class SubTaskTest {
     @Test

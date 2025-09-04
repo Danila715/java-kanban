@@ -1,9 +1,13 @@
-package test.manager;
+package manager;
 
-import main.model.*;
-import main.manager.*;
+import main.java.main.manager.InMemoryTaskManager;
+import main.java.main.model.Epic;
+import main.java.main.model.SubTask;
+import main.java.main.model.Task;
+import main.java.main.model.TaskStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class InMemoryTaskManagerTest {
@@ -98,4 +102,71 @@ public class InMemoryTaskManagerTest {
         // Проверяем, что статус эпика становится DONE
         assertEquals(TaskStatus.DONE, manager.getEpicById(epicId).getStatus(), "Эпик должен иметь статус DONE, если все подзадачи имеют статус DONE");
     }
+
+    @Test
+    void deletedSubTasksDoNotKeepOldIds() {
+        // Создаем эпик и подзадачу
+        int epicId = 1;
+        manager.addEpic("Эпик", "Описание");
+        manager.addSubTask("Подзадача", "Описание", epicId, TaskStatus.NEW);
+        SubTask subTask = manager.getAllSubTasks().get(0);
+        int subTaskId = subTask.getId();
+
+        // Удаляем подзадачу
+        manager.deleteSubTask(subTaskId);
+
+        // Проверяем, что подзадача удалена из менеджера и истории
+        assertNull(manager.getSubTaskById(subTaskId), "Подзадача должна быть удалена из менеджера");
+        assertFalse(manager.getHistory().stream().anyMatch(task -> task.getId() == subTaskId), "Подзадача не должна оставаться в истории");
+    }
+
+    @Test
+    void epicsDoNotKeepDeletedSubTaskIds() {
+        // Создаем эпик и две подзадачи
+        int epicId = 1;
+        manager.addEpic("Эпик", "Описание");
+        manager.addSubTask("Подзадача 1", "Описание", epicId, TaskStatus.NEW);
+        SubTask subTask1 = manager.getAllSubTasks().get(0);
+        int subTaskId1 = subTask1.getId();
+        manager.addSubTask("Подзадача 2", "Описание", epicId, TaskStatus.NEW);
+        SubTask subTask2 = manager.getAllSubTasks().get(1);
+        int subTaskId2 = subTask2.getId();
+
+        // Удаляем одну подзадачу
+        manager.deleteSubTask(subTaskId1);
+
+        // Проверяем, что эпик не содержит ID удаленной подзадачи
+        Epic epic = manager.getEpicById(epicId);
+        assertFalse(epic.getSubTaskIds().contains(subTaskId1), "Эпик не должен содержать ID удаленной подзадачи");
+        assertTrue(epic.getSubTaskIds().contains(subTaskId2), "Эпик должен содержать ID оставшейся подзадачи");
+    }
+
+    @Test
+    void settersDoNotAffectManagerData() {
+        // Создаем задачу и подзадачу
+        Task task = manager.createTaskWithId("Задача", "Описание", 1, TaskStatus.NEW);
+        int epicId = 2;
+        manager.addEpic("Эпик", "Описание");
+        manager.addSubTask("Подзадача", "Описание", epicId, TaskStatus.NEW);
+        SubTask subTask = manager.getAllSubTasks().get(0);
+        int subTaskId = subTask.getId();
+
+        // Изменяем поля через сеттеры
+        task.setTitle("Новое название");
+        task.setStatus(TaskStatus.DONE);
+        subTask.setTitle("Новое название подзадачи");
+        subTask.setStatus(TaskStatus.DONE);
+        subTask.setEpicId(999);
+
+        // Проверяем, что данные в менеджере не изменились
+        Task storedTask = manager.getTaskById(1);
+        assertEquals("Задача", storedTask.getTitle(), "Название задачи в менеджере не должно измениться");
+        assertEquals(TaskStatus.NEW, storedTask.getStatus(), "Статус задачи в менеджере не должен измениться");
+
+        SubTask storedSubTask = manager.getSubTaskById(subTaskId);
+        assertEquals("Подзадача", storedSubTask.getTitle(), "Название подзадачи в менеджере не должно измениться");
+        assertEquals(TaskStatus.NEW, storedSubTask.getStatus(), "Статус подзадачи в менеджере не должен измениться");
+        assertEquals(epicId, storedSubTask.getEpicId(), "ID подзадачи эпика в менеджере не должен измениться");
+    }
+
 }
