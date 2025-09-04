@@ -8,10 +8,10 @@ import main.java.main.model.TaskStatus;
 import java.util.*;
 
 public class InMemoryTaskManager implements TaskManager {
-    private final Map<Integer, Epic> epics = new HashMap<>();
-    private final Map<Integer, SubTask> subTasks = new HashMap<>();
-    private final Map<Integer, Task> tasks = new HashMap<>();
-    private int nextId = 1;
+    protected final Map<Integer, Epic> epics = new HashMap<>();
+    protected final Map<Integer, SubTask> subTasks = new HashMap<>();
+    protected final Map<Integer, Task> tasks = new HashMap<>();
+    protected int nextId = 1;
     private final HistoryManager historyManager;
 
     public InMemoryTaskManager() {
@@ -152,7 +152,7 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     /*Обновление статуса эпика*/
-    private void updateEpicStatus(Epic epic) {
+    void updateEpicStatus(Epic epic) {
         if (epic == null) {
             return;
         }
