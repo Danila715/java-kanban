@@ -1,6 +1,7 @@
 package manager;
 
 import main.java.main.manager.FileBackedTaskManager;
+import main.java.main.manager.Managers;
 import main.java.main.model.Epic;
 import main.java.main.model.SubTask;
 import main.java.main.model.Task;
@@ -26,7 +27,7 @@ public class FileBackedTaskManagerTest {
     @BeforeEach
     void setUp() throws IOException {
         tempFile = File.createTempFile("tasks", ".csv");
-        manager = FileBackedTaskManager.loadFromFile(tempFile);
+        manager = Managers.getDefaultFileBacked(tempFile);
     }
 
     /*

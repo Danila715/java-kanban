@@ -1,7 +1,6 @@
 package main.java.main.manager;
 
 import java.io.File;
-import java.io.IOException;
 
 public class Managers {
     public static TaskManager getDefault() {
@@ -12,13 +11,8 @@ public class Managers {
         return new InMemoryHistoryManager();
     }
 
-    public static TaskManager getDefaultFileBacked() {
-        try {
-            File file = File.createTempFile("tasks", ".csv");
-            return FileBackedTaskManager.loadFromFile(file);
-        } catch (IOException e) {
-            throw new ManagerSaveException("Ошибка при создании временного файла для FileBackedTaskManager", e);
-        }
+    public static FileBackedTaskManager getDefaultFileBacked(File file) {
+        return FileBackedTaskManager.loadFromFile(file);
 
     }
 }
