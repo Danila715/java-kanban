@@ -11,7 +11,7 @@ import java.io.*;
 public class FileBackedTaskManager extends InMemoryTaskManager {
     private final File file;
 
-    public FileBackedTaskManager(File file) {
+    private FileBackedTaskManager(File file) {
         super();
         this.file = file;
     }
@@ -95,7 +95,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
             }
 
         } catch (IOException e) {
-            throw new ManagerSaveException("Ошибка при загрузке файла: " + file.getPath(), e);
+            throw new ManagerLoadException("Ошибка при загрузке файла: " + file.getPath(), e);
         }
         return manager;
     }

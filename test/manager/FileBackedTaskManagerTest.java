@@ -1,7 +1,6 @@
 package manager;
 
 import main.java.main.manager.FileBackedTaskManager;
-import main.java.main.manager.InMemoryTaskManager;
 import main.java.main.model.Epic;
 import main.java.main.model.SubTask;
 import main.java.main.model.Task;
@@ -19,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FileBackedTaskManagerTest {
     private File tempFile;
+    private FileBackedTaskManager manager;
 
     /*
     Создаем временный файл перед каждым тестом
@@ -26,6 +26,7 @@ public class FileBackedTaskManagerTest {
     @BeforeEach
     void setUp() throws IOException {
         tempFile = File.createTempFile("tasks", ".csv");
+        manager = FileBackedTaskManager.loadFromFile(tempFile);
     }
 
     /*
@@ -33,7 +34,6 @@ public class FileBackedTaskManagerTest {
      */
     @Test
     void saveAndLoadEmptyFile() {
-        FileBackedTaskManager manager = new FileBackedTaskManager(tempFile);
         manager.save();
 
         FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
@@ -46,26 +46,23 @@ public class FileBackedTaskManagerTest {
     Тест для сохранения нескольких задач, эпиков и подзадач
      */
     @Test
-    void saveMultipleTasks() {
-        FileBackedTaskManager manager = new FileBackedTaskManager(tempFile);
-        Task task = manager.createTask("Задача 1", "Описание задачи 1", TaskStatus.NEW);
+    void saveMultipleTasks() throws IOException {
+        manager.createTask("Задача 1", "Описание задачи 1", TaskStatus.NEW);
         manager.addEpic("Эпик 1", "Описание эпика 1");
         manager.addSubTask("Подзадача 1", "Описание подзадачи 1", 2, TaskStatus.DONE);
 
         // Проверяем содержимое файла
-        try (BufferedReader reader = new BufferedReader(new FileReader(tempFile))) {
-            String header = reader.readLine();
-            String taskLine = reader.readLine();
-            String epicLine = reader.readLine();
-            String subTaskLine = reader.readLine();
+        BufferedReader reader = new BufferedReader(new FileReader(tempFile));
+        String header = reader.readLine();
+        String taskLine = reader.readLine();
+        String epicLine = reader.readLine();
+        String subTaskLine = reader.readLine();
+        reader.close();
 
-            assertEquals("id,type,name,status,description,epic", header, "Заголовок CSV должен быть корректным");
-            assertEquals("1,TASK,Задача 1,NEW,Описание задачи 1,", taskLine, "Задача должна быть сохранена в CSV");
-            assertEquals("2,EPIC,Эпик 1,DONE,Описание эпика 1,", epicLine, "Эпик должен быть сохранен в CSV");
-            assertEquals("3,SUBTASK,Подзадача 1,DONE,Описание подзадачи 1,2", subTaskLine, "Подзадача должна быть сохранена в CSV");
-        } catch (IOException e) {
-            throw new RuntimeException("Ошибка при чтении файла: " + e.getMessage());
-        }
+        assertEquals("id,type,name,status,description,epic", header, "Заголовок CSV должен быть корректным");
+        assertEquals("1,TASK,Задача 1,NEW,Описание задачи 1,", taskLine, "Задача должна быть сохранена в CSV");
+        assertEquals("2,EPIC,Эпик 1,DONE,Описание эпика 1,", epicLine, "Эпик должен быть сохранен в CSV");
+        assertEquals("3,SUBTASK,Подзадача 1,DONE,Описание подзадачи 1,2", subTaskLine, "Подзадача должна быть сохранена в CSV");
     }
 
     /*
@@ -73,8 +70,7 @@ public class FileBackedTaskManagerTest {
      */
     @Test
     void loadMultipleTasks() {
-        FileBackedTaskManager manager = new FileBackedTaskManager(tempFile);
-        Task task = manager.createTask("Задача 1", "Описание задачи 1", TaskStatus.NEW);
+        manager.createTask("Задача 1", "Описание задачи 1", TaskStatus.NEW);
         manager.addEpic("Эпик 1", "Описание эпика 1");
         manager.addSubTask("Подзадача 1", "Описание подзадачи 1", 2, TaskStatus.DONE);
 
@@ -98,87 +94,42 @@ public class FileBackedTaskManagerTest {
     }
 
     /*
-    Тест для проверки поведения как у InMemoryTaskManager при создании и получении задач
+    Тест для проверки обновления статуса эпика в FileBackedTaskManager
      */
     @Test
-    void behavesLikeInMemoryTaskManagerForTaskCreationAndRetrieval() {
-        FileBackedTaskManager fileManager = new FileBackedTaskManager(tempFile);
-        InMemoryTaskManager memoryManager = new InMemoryTaskManager();
+    void testEpicStatusUpdate() {
+        manager.addEpic("Эпик 1", "Описание эпика");
+        manager.addSubTask("Подзадача 1", "Описание", 1, TaskStatus.DONE);
+        manager.addSubTask("Подзадача 2", "Описание", 1, TaskStatus.DONE);
 
-        // Создаем задачи, эпики и подзадачи в обоих менеджерах
-        fileManager.createTask("Задача 1", "Описание", TaskStatus.NEW);
-        memoryManager.createTask("Задача 1", "Описание", TaskStatus.NEW);
-        fileManager.addEpic("Эпик 1", "Описание эпика");
-        memoryManager.addEpic("Эпик 1", "Описание эпика");
-        fileManager.addSubTask("Подзадача 1", "Описание подзадачи", 2, TaskStatus.DONE);
-        memoryManager.addSubTask("Подзадача 1", "Описание подзадачи", 2, TaskStatus.DONE);
+        // Проверяем, что статус эпика стал DONE
+        Epic epic = manager.getAllEpics().get(0);
+        assertEquals(TaskStatus.DONE, epic.getStatus(), "Статус эпика должен быть DONE, если все подзадачи DONE");
 
-        // Проверяем, что результаты совпадают
-        assertEquals(memoryManager.getAllTasks().size(), fileManager.getAllTasks().size(), "Количество задач должно совпадать");
-        assertEquals(memoryManager.getAllTasks().get(0).getTitle(), fileManager.getAllTasks().get(0).getTitle(), "Название задачи должно совпадать");
-        assertEquals(memoryManager.getAllEpics().size(), fileManager.getAllEpics().size(), "Количество эпиков должно совпадать");
-        assertEquals(memoryManager.getAllEpics().get(0).getTitle(), fileManager.getAllEpics().get(0).getTitle(), "Название эпика должно совпадать");
-        assertEquals(memoryManager.getAllSubTasks().size(), fileManager.getAllSubTasks().size(), "Количество подзадач должно совпадать");
-        assertEquals(memoryManager.getAllSubTasks().get(0).getTitle(), fileManager.getAllSubTasks().get(0).getTitle(), "Название подзадачи должно совпадать");
+        // Обновляем подзадачу на IN_PROGRESS
+        manager.updateSubTask(new SubTask("Подзадача 1", "Описание", 2, TaskStatus.IN_PROGRESS, 1));
+
+        // Проверяем, что статус эпика стал IN_PROGRESS
+        assertEquals(TaskStatus.IN_PROGRESS, epic.getStatus(), "Статус эпика должен быть IN_PROGRESS при разных статусах подзадач");
     }
 
     /*
-    Тест для проверки обновления статуса эпика
+    Тест для проверки удаления задач и эпиков в FileBackedTaskManager
      */
     @Test
-    void behavesLikeInMemoryTaskManagerForEpicStatusUpdate() {
-        FileBackedTaskManager fileManager = new FileBackedTaskManager(tempFile);
-        InMemoryTaskManager memoryManager = new InMemoryTaskManager();
+    void testTaskAndEpicDeletion() {
+        // Создаем задачу, эпик и подзадачу
+        manager.createTask("Задача 1", "Описание", TaskStatus.NEW);
+        manager.addEpic("Эпик 1", "Описание эпика");
+        manager.addSubTask("Подзадача 1", "Описание подзадачи", 2, TaskStatus.NEW);
 
-        // Создаем эпик и подзадачи
-        fileManager.addEpic("Эпик 1", "Описание эпика");
-        memoryManager.addEpic("Эпик 1", "Описание эпика");
-        fileManager.addSubTask("Подзадача 1", "Описание", 1, TaskStatus.DONE);
-        memoryManager.addSubTask("Подзадача 1", "Описание", 1, TaskStatus.DONE);
-        fileManager.addSubTask("Подзадача 2", "Описание", 1, TaskStatus.DONE);
-        memoryManager.addSubTask("Подзадача 2", "Описание", 1, TaskStatus.DONE);
+        // Удаляем задачу
+        manager.deleteTaskById(1);
+        assertEquals(0, manager.getAllTasks().size(), "Список задач должен быть пустым после удаления");
 
-        // Проверяем статус эпика
-        assertEquals(TaskStatus.DONE, fileManager.getAllEpics().get(0).getStatus(), "Статус эпика должен быть DONE в FileBackedTaskManager");
-        assertEquals(TaskStatus.DONE, memoryManager.getAllEpics().get(0).getStatus(), "Статус эпика должен быть DONE в InMemoryTaskManager");
-
-        // Обновляем одну подзадачу на IN_PROGRESS
-        fileManager.updateSubTask(new SubTask("Подзадача 1", "Описание", 2, TaskStatus.IN_PROGRESS, 1));
-        memoryManager.updateSubTask(new SubTask("Подзадача 1", "Описание", 2, TaskStatus.IN_PROGRESS, 1));
-
-        // Проверяем, что статус эпика изменился
-        assertEquals(TaskStatus.IN_PROGRESS, fileManager.getAllEpics().get(0).getStatus(), "Статус эпика должен быть IN_PROGRESS в FileBackedTaskManager");
-        assertEquals(TaskStatus.IN_PROGRESS, memoryManager.getAllEpics().get(0).getStatus(), "Статус эпика должен быть IN_PROGRESS в InMemoryTaskManager");
-    }
-
-    /*
-    Тест для проверки удаления задач и эпиков
-     */
-    @Test
-    void behavesLikeInMemoryTaskManagerForDeletion() {
-        FileBackedTaskManager fileManager = new FileBackedTaskManager(tempFile);
-        InMemoryTaskManager memoryManager = new InMemoryTaskManager();
-
-        // Создаем задачи и эпики
-        fileManager.createTask("Задача 1", "Описание", TaskStatus.NEW);
-        memoryManager.createTask("Задача 1", "Описание", TaskStatus.NEW);
-        fileManager.addEpic("Эпик 1", "Описание эпика");
-        memoryManager.addEpic("Эпик 1", "Описание эпика");
-        fileManager.addSubTask("Подзадача 1", "Описание подзадачи", 2, TaskStatus.NEW);
-        memoryManager.addSubTask("Подзадача 1", "Описание подзадачи", 2, TaskStatus.NEW);
-
-        // Удаляем задачу и эпик
-        fileManager.deleteTaskById(1);
-        memoryManager.deleteTaskById(1);
-        fileManager.deleteEpic(2);
-        memoryManager.deleteEpic(2);
-
-        // Проверяем, что задачи и подзадачи удалены
-        assertEquals(0, fileManager.getAllTasks().size(), "Список задач должен быть пустым в FileBackedTaskManager");
-        assertEquals(0, memoryManager.getAllTasks().size(), "Список задач должен быть пустым в InMemoryTaskManager");
-        assertEquals(0, fileManager.getAllEpics().size(), "Список эпиков должен быть пустым в FileBackedTaskManager");
-        assertEquals(0, memoryManager.getAllEpics().size(), "Список эпиков должен быть пустым в InMemoryTaskManager");
-        assertEquals(0, fileManager.getAllSubTasks().size(), "Список подзадач должен быть пустым в FileBackedTaskManager");
-        assertEquals(0, memoryManager.getAllSubTasks().size(), "Список подзадач должен быть пустым в InMemoryTaskManager");
+        // Удаляем эпик (должна удалиться и подзадача)
+        manager.deleteEpic(2);
+        assertEquals(0, manager.getAllEpics().size(), "Список эпиков должен быть пустым после удаления");
+        assertEquals(0, manager.getAllSubTasks().size(), "Список подзадач должен быть пустым после удаления эпика");
     }
 }
