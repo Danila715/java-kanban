@@ -13,6 +13,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,9 +50,13 @@ public class FileBackedTaskManagerTest {
      */
     @Test
     void saveMultipleTasks() throws IOException {
-        manager.createTask("Задача 1", "Описание задачи 1", TaskStatus.NEW);
+        LocalDateTime startTime = LocalDateTime.of(2025, 1, 15, 10, 0);
+        Duration duration = Duration.ofHours(2);
+
+        manager.createTask("Задача 1", "Описание задачи 1", TaskStatus.NEW, duration, startTime);
         manager.addEpic("Эпик 1", "Описание эпика 1");
-        manager.addSubTask("Подзадача 1", "Описание подзадачи 1", 2, TaskStatus.DONE);
+        manager.addSubTask("Подзадача 1", "Описание подзадачи 1", 2, TaskStatus.DONE,
+                Duration.ofHours(1), startTime.plusHours(3));
 
         // Проверяем содержимое файла
         BufferedReader reader = new BufferedReader(new FileReader(tempFile));
@@ -60,20 +66,24 @@ public class FileBackedTaskManagerTest {
         String subTaskLine = reader.readLine();
         reader.close();
 
-        assertEquals("id,type,name,status,description,epic", header, "Заголовок CSV должен быть корректным");
-        assertEquals("1,TASK,Задача 1,NEW,Описание задачи 1,", taskLine, "Задача должна быть сохранена в CSV");
-        assertEquals("2,EPIC,Эпик 1,DONE,Описание эпика 1,", epicLine, "Эпик должен быть сохранен в CSV");
-        assertEquals("3,SUBTASK,Подзадача 1,DONE,Описание подзадачи 1,2", subTaskLine, "Подзадача должна быть сохранена в CSV");
+        assertEquals("id,type,name,status,description,epic,duration,startTime", header, "Заголовок CSV должен быть корректным");
+        assertEquals("1,TASK,Задача 1,NEW,Описание задачи 1,,120,2025-01-15 10:00", taskLine, "Задача должна быть сохранена в CSV с временными полями");
+        assertEquals("2,EPIC,Эпик 1,DONE,Описание эпика 1,,60,2025-01-15 13:00", epicLine, "Эпик должен быть сохранен в CSV");
+        assertEquals("3,SUBTASK,Подзадача 1,DONE,Описание подзадачи 1,2,60,2025-01-15 13:00", subTaskLine, "Подзадача должна быть сохранена в CSV с временными полями");
     }
 
     /*
-    Тест для загрузки нескольких задач, эпиков и подзадач
+    Тест для загрузки нескольких задач, эпиков и подзадач с временными полями
      */
     @Test
-    void loadMultipleTasks() {
-        manager.createTask("Задача 1", "Описание задачи 1", TaskStatus.NEW);
+    void loadMultipleTasksWithTimeFields() {
+        LocalDateTime startTime = LocalDateTime.of(2025, 1, 15, 10, 0);
+        Duration duration = Duration.ofHours(2);
+
+        manager.createTask("Задача 1", "Описание задачи 1", TaskStatus.NEW, duration, startTime);
         manager.addEpic("Эпик 1", "Описание эпика 1");
-        manager.addSubTask("Подзадача 1", "Описание подзадачи 1", 2, TaskStatus.DONE);
+        manager.addSubTask("Подзадача 1", "Описание подзадачи 1", 2, TaskStatus.DONE,
+                Duration.ofHours(1), startTime.plusHours(3));
 
         FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
 
@@ -84,6 +94,9 @@ public class FileBackedTaskManagerTest {
         assertEquals(1, tasks.size(), "Должна быть загружена одна задача");
         assertEquals("Задача 1", tasks.get(0).getTitle(), "Название задачи должно быть корректным");
         assertEquals(TaskStatus.NEW, tasks.get(0).getStatus(), "Статус задачи должен быть NEW");
+        assertEquals(duration, tasks.get(0).getDuration(), "Продолжительность задачи должна быть загружена корректно");
+        assertEquals(startTime, tasks.get(0).getStartTime(), "Время начала задачи должно быть загружено корректно");
+        assertEquals(startTime.plus(duration), tasks.get(0).getEndTime(), "Время окончания должно быть рассчитано корректно");
 
         assertEquals(1, epics.size(), "Должен быть загружен один эпик");
         assertEquals("Эпик 1", epics.get(0).getTitle(), "Название эпика должно быть корректным");
@@ -92,6 +105,8 @@ public class FileBackedTaskManagerTest {
         assertEquals("Подзадача 1", subTasks.get(0).getTitle(), "Название подзадачи должно быть корректным");
         assertEquals(TaskStatus.DONE, subTasks.get(0).getStatus(), "Статус подзадачи должен быть DONE");
         assertEquals(2, subTasks.get(0).getEpicId(), "ID эпика подзадачи должен быть корректным");
+        assertEquals(Duration.ofHours(1), subTasks.get(0).getDuration(), "Продолжительность подзадачи должна быть загружена корректно");
+        assertEquals(startTime.plusHours(3), subTasks.get(0).getStartTime(), "Время начала подзадачи должно быть загружено корректно");
     }
 
     /*
@@ -132,5 +147,74 @@ public class FileBackedTaskManagerTest {
         manager.deleteEpic(2);
         assertEquals(0, manager.getAllEpics().size(), "Список эпиков должен быть пустым после удаления");
         assertEquals(0, manager.getAllSubTasks().size(), "Список подзадач должен быть пустым после удаления эпика");
+    }
+
+    /*
+    Тест для проверки расчета полей эпика на основе подзадач
+     */
+    @Test
+    void testEpicFieldsCalculation() {
+        LocalDateTime start1 = LocalDateTime.of(2025, 1, 15, 10, 0);
+        LocalDateTime start2 = LocalDateTime.of(2025, 1, 15, 14, 0);
+        Duration duration1 = Duration.ofHours(2);
+        Duration duration2 = Duration.ofHours(1);
+
+        manager.addEpic("Эпик с временем", "Описание эпика");
+        int epicId = manager.getAllEpics().get(0).getId();
+
+        manager.addSubTask("Подзадача 1", "Описание", epicId, TaskStatus.NEW, duration1, start1);
+        manager.addSubTask("Подзадача 2", "Описание", epicId, TaskStatus.NEW, duration2, start2);
+
+        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
+        Epic loadedEpic = loadedManager.getAllEpics().get(0);
+
+        assertEquals(duration1.plus(duration2), loadedEpic.getDuration(), "Продолжительность эпика должна быть суммой подзадач");
+        assertEquals(start1, loadedEpic.getStartTime(), "Время начала эпика должно быть самым ранним из подзадач");
+        assertEquals(start2.plus(duration2), loadedEpic.getEndTime(), "Время окончания эпика должно быть самым поздним из подзадач");
+    }
+
+    /*
+    Тест для проверки сохранения приоритетного списка задач
+     */
+    @Test
+    void testPrioritizedTasksSaveAndLoad() {
+        LocalDateTime now = LocalDateTime.of(2025, 1, 15, 10, 0);
+
+        manager.createTask("Задача 3", "Описание", TaskStatus.NEW, Duration.ofHours(1), now.plusHours(2));
+        manager.createTask("Задача 1", "Описание", TaskStatus.NEW, Duration.ofHours(1), now);
+        manager.createTask("Задача 2", "Описание", TaskStatus.NEW, Duration.ofHours(1), now.plusHours(1));
+        manager.createTask("Задача без времени", "Описание", TaskStatus.NEW); // без времени - не попадет в список
+
+        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
+        List<Task> prioritized = loadedManager.getPrioritizedTasks();
+
+        assertEquals(3, prioritized.size(), "В приоритетном списке должно быть 3 задачи (без учета задачи без времени)");
+        assertEquals(now, prioritized.get(0).getStartTime(), "Первая задача должна быть самой ранней");
+        assertEquals(now.plusHours(1), prioritized.get(1).getStartTime(), "Вторая задача должна быть средней");
+        assertEquals(now.plusHours(2), prioritized.get(2).getStartTime(), "Третья задача должна быть самой поздней");
+    }
+
+    /*
+    Тест проверки пересечений после загрузки из файла
+     */
+    @Test
+    void testOverlapValidationAfterLoad() {
+        LocalDateTime now = LocalDateTime.of(2025, 1, 15, 10, 0);
+        Duration duration = Duration.ofHours(1);
+
+        manager.createTask("Задача 1", "Описание", TaskStatus.NEW, duration, now);
+        manager.createTask("Задача 2", "Описание", TaskStatus.NEW, duration, now.plusHours(2));
+
+        FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
+
+        // Попытка добавить пересекающуюся задачу должна вызвать исключение
+        try {
+            loadedManager.createTask("Пересекающаяся задача", "Описание", TaskStatus.NEW,
+                    duration, now.plusMinutes(30));
+            assert false : "Должно было выброситься исключение при пересечении";
+        } catch (IllegalArgumentException e) {
+            // Ожидаемое поведение
+            assertEquals("Задача пересекается по времени с существующими задачами", e.getMessage());
+        }
     }
 }

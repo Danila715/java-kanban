@@ -5,10 +5,14 @@ import main.java.main.model.SubTask;
 import main.java.main.model.Task;
 import main.java.main.model.TaskStatus;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TaskManager {
     Task createTask(String title, String description, TaskStatus status);
+
+    Task createTask(String title, String description, TaskStatus status, Duration duration, LocalDateTime startTime);
 
     void deleteAllTasks();
 
@@ -25,6 +29,8 @@ public interface TaskManager {
     void addEpic(String title, String description);
 
     void addSubTask(String title, String description, int epicId, TaskStatus status);
+
+    void addSubTask(String title, String description, int epicId, TaskStatus status, Duration duration, LocalDateTime startTime);
 
     List<SubTask> getSubTasks(int epicId);
 
@@ -47,4 +53,10 @@ public interface TaskManager {
     List<SubTask> getAllSubTasks();
 
     List<Task> getHistory();
+
+    List<Task> getPrioritizedTasks();
+
+    boolean checkTaskOverlap(Task task1, Task task2);
+
+    boolean hasOverlapWithExistingTasks(Task task);
 }
