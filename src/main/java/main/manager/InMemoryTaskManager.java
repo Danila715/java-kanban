@@ -35,20 +35,24 @@ public class InMemoryTaskManager implements TaskManager {
         this.historyManager = Managers.getDefaultHistory();
     }
 
+    private void validateTaskOverlap(Task task) throws TaskOverlapException {
+        if (task.getStartTime() != null && hasOverlapWithExistingTasks(task)) {
+            throw new TaskOverlapException("Задача пересекается по времени с существующими задачами");
+        }
+    }
+
     /*Создание задачи*/
     @Override
-    public Task createTask(String title, String description, TaskStatus status) {
+    public Task createTask(String title, String description, TaskStatus status) throws TaskOverlapException {
         return createTask(title, description, status, Duration.ZERO, null);
     }
 
     @Override
-    public Task createTask(String title, String description, TaskStatus status, Duration duration, LocalDateTime startTime) {
+    public Task createTask(String title, String description, TaskStatus status, Duration duration, LocalDateTime startTime) throws TaskOverlapException {
         int id = nextId++;
         Task task = new Task(title, description, id, status, duration, startTime);
 
-        if (startTime != null && hasOverlapWithExistingTasks(task)) {
-            throw new IllegalArgumentException("Задача пересекается по времени с существующими задачами");
-        }
+        validateTaskOverlap(task);
 
         tasks.put(id, new Task(task));
 
@@ -69,12 +73,12 @@ public class InMemoryTaskManager implements TaskManager {
 
     /*Добавление подзадачи*/
     @Override
-    public void addSubTask(String title, String description, int epicId, TaskStatus status) {
+    public void addSubTask(String title, String description, int epicId, TaskStatus status) throws TaskOverlapException {
         addSubTask(title, description, epicId, status, Duration.ZERO, null);
     }
 
     @Override
-    public void addSubTask(String title, String description, int epicId, TaskStatus status, Duration duration, LocalDateTime startTime) {
+    public void addSubTask(String title, String description, int epicId, TaskStatus status, Duration duration, LocalDateTime startTime) throws TaskOverlapException {
         Epic epic = epics.get(epicId);
         if (epic != null) {
             int id = getNextId();
@@ -84,9 +88,7 @@ public class InMemoryTaskManager implements TaskManager {
 
             SubTask subTask = new SubTask(title, description, id, status, epicId, duration, startTime);
 
-            if (startTime != null && hasOverlapWithExistingTasks(subTask)) {
-                throw new IllegalArgumentException("Подзадача пересекается по времени с существующими задачами");
-            }
+            validateTaskOverlap(subTask);
 
             subTasks.put(id, new SubTask(subTask));
             epic.addSubTaskId(id);
@@ -178,16 +180,14 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     /*Обновление nextId, чтобы избежать конфликтов*/
-    public Task createTaskWithId(String title, String description, int id, TaskStatus status) {
+    public Task createTaskWithId(String title, String description, int id, TaskStatus status) throws TaskOverlapException {
         return createTaskWithId(title, description, id, status, Duration.ZERO, null);
     }
 
-    public Task createTaskWithId(String title, String description, int id, TaskStatus status, Duration duration, LocalDateTime startTime) {
+    public Task createTaskWithId(String title, String description, int id, TaskStatus status, Duration duration, LocalDateTime startTime) throws TaskOverlapException {
         Task task = new Task(title, description, id, status, duration, startTime);
 
-        if (startTime != null && hasOverlapWithExistingTasks(task)) {
-            throw new IllegalArgumentException("Задача пересекается по времени с существующими задачами");
-        }
+        validateTaskOverlap(task);
 
         tasks.put(id, new Task(task));
         if (id >= nextId) {
@@ -256,14 +256,14 @@ public class InMemoryTaskManager implements TaskManager {
 
     /*Обновление задачи*/
     @Override
-    public void updateTask(Task updatedTask) {
+    public void updateTask(Task updatedTask) throws TaskOverlapException {
         if (updatedTask != null && tasks.containsKey(updatedTask.getId())) {
             Task oldTask = tasks.get(updatedTask.getId());
 
             if (updatedTask.getStartTime() != null &&
                     !Objects.equals(oldTask.getStartTime(), updatedTask.getStartTime()) &&
                     hasOverlapWithExistingTasks(updatedTask)) {
-                throw new IllegalArgumentException("Обновленная задача пересекается по времени с существующими задачами");
+                throw new TaskOverlapException("Обновленная задача пересекается по времени с существующими задачами");
             }
 
             prioritizedTasks.remove(oldTask);
@@ -290,7 +290,7 @@ public class InMemoryTaskManager implements TaskManager {
 
     /*Обновление подзадачи*/
     @Override
-    public void updateSubTask(SubTask subTask) {
+    public void updateSubTask(SubTask subTask) throws TaskOverlapException {
         if (subTasks.containsKey(subTask.getId())) {
             if (subTask.getId() == subTask.getEpicId()) {
                 return;
@@ -301,7 +301,7 @@ public class InMemoryTaskManager implements TaskManager {
             if (subTask.getStartTime() != null &&
                     !Objects.equals(oldSubTask.getStartTime(), subTask.getStartTime()) &&
                     hasOverlapWithExistingTasks(subTask)) {
-                throw new IllegalArgumentException("Обновленная подзадача пересекается по времени с существующими задачами");
+                throw new TaskOverlapException("Обновленная подзадача пересекается по времени с существующими задачами");
             }
 
             prioritizedTasks.remove(oldSubTask);

@@ -1,6 +1,7 @@
 package manager;
 
 import main.java.main.manager.InMemoryTaskManager;
+import main.java.main.manager.TaskOverlapException;
 import main.java.main.model.Epic;
 import main.java.main.model.SubTask;
 import main.java.main.model.Task;
@@ -24,7 +25,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void addsAndRetrievesTasksById() {
+    void addsAndRetrievesTasksById() throws TaskOverlapException {
         // Создаем задачу, эпик и подзадачу
         Task task = manager.createTask("Задача", "Описание", TaskStatus.NEW);
         int taskId = task.getId();
@@ -42,7 +43,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void tasksWithSpecifiedAndGeneratedIdsDoNotConflict() {
+    void tasksWithSpecifiedAndGeneratedIdsDoNotConflict() throws TaskOverlapException {
         // Создаем задачу с автоматически сгенерированным ID
         Task task1 = manager.createTask("Задача 1", "Описание 1", TaskStatus.NEW);
         int generatedId = task1.getId();
@@ -56,7 +57,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void taskSavedStateWhenAdded() {
+    void taskSavedStateWhenAdded() throws TaskOverlapException {
         // Создаем задачу и сохраняем ее копию
         int id = 1;
         Task task = manager.createTaskWithId("Задача", "Описание", id, TaskStatus.NEW);
@@ -71,7 +72,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void epicCannotBeItsOwnSubTask() {
+    void epicCannotBeItsOwnSubTask() throws TaskOverlapException {
         // Создаем эпик
         Epic epic = new Epic("Эпик", "Описание", 1);
         manager.addEpic(epic.getTitle(), epic.getDescription());
@@ -83,7 +84,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void subTaskCannotBeItsOwnEpic() {
+    void subTaskCannotBeItsOwnEpic() throws TaskOverlapException {
         // Создаем эпик и подзадачу
         Epic epic = new Epic("Эпик", "Описание", 1);
         manager.addEpic(epic.getTitle(), epic.getDescription());
@@ -95,7 +96,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void epicStatusIsDoneWhenAllSubTasksAreDone() {
+    void epicStatusIsDoneWhenAllSubTasksAreDone() throws TaskOverlapException {
         // Создаем эпик и добавляем две подзадачи со статусом DONE
         int epicId = 1;
         Epic epic = new Epic("Эпик", "Описание", epicId);
@@ -108,7 +109,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void deletedSubTasksDoNotKeepOldIds() {
+    void deletedSubTasksDoNotKeepOldIds() throws TaskOverlapException {
         // Создаем эпик и подзадачу
         int epicId = 1;
         manager.addEpic("Эпик", "Описание");
@@ -125,7 +126,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void epicsDoNotKeepDeletedSubTaskIds() {
+    void epicsDoNotKeepDeletedSubTaskIds() throws TaskOverlapException {
         // Создаем эпик и две подзадачи
         int epicId = 1;
         manager.addEpic("Эпик", "Описание");
@@ -146,7 +147,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void settersDoNotAffectManagerData() {
+    void settersDoNotAffectManagerData() throws TaskOverlapException {
         // Создаем задачу и подзадачу
         Task task = manager.createTaskWithId("Задача", "Описание", 1, TaskStatus.NEW);
         int epicId = 2;
@@ -178,7 +179,7 @@ public class InMemoryTaskManagerTest {
      */
 
     @Test
-    void taskWithDurationAndStartTime() {
+    void taskWithDurationAndStartTime() throws TaskOverlapException {
         Duration duration = Duration.ofHours(2);
         LocalDateTime startTime = LocalDateTime.now();
 
@@ -190,7 +191,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void epicCalculatesFieldsFromSubTasks() {
+    void epicCalculatesFieldsFromSubTasks() throws TaskOverlapException {
         manager.addEpic("Эпик с временем", "Описание");
         Epic epic = manager.getAllEpics().get(0);
         int epicId = epic.getId();
@@ -211,7 +212,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void getPrioritizedTasksReturnsSortedByStartTime() {
+    void getPrioritizedTasksReturnsSortedByStartTime() throws TaskOverlapException {
         LocalDateTime now = LocalDateTime.now();
 
         manager.createTask("Задача 3", "Описание", TaskStatus.NEW, Duration.ofHours(1), now.plusHours(2));
@@ -252,7 +253,7 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void hasOverlapWithExistingTasksReturnsTrueWhenOverlapExists() {
+    void hasOverlapWithExistingTasksReturnsTrueWhenOverlapExists() throws TaskOverlapException {
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
@@ -265,19 +266,20 @@ public class InMemoryTaskManagerTest {
     }
 
     @Test
-    void createTaskThrowsExceptionWhenOverlapDetected() {
+    void createTaskThrowsExceptionWhenOverlapDetected() throws TaskOverlapException {
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
         manager.createTask("Существующая задача", "Описание", TaskStatus.NEW, duration, now);
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(TaskOverlapException.class, () -> {
             manager.createTask("Пересекающаяся задача", "Описание", TaskStatus.NEW, duration, now.plusMinutes(30));
         }, "Должно выбросить исключение при попытке создать пересекающуюся задачу");
     }
 
+
     @Test
-    void updateTaskThrowsExceptionWhenOverlapDetected() {
+    void updateTaskThrowsExceptionWhenOverlapDetected() throws TaskOverlapException {
         LocalDateTime now = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
@@ -286,7 +288,7 @@ public class InMemoryTaskManagerTest {
 
         task1.setStartTime(now.plusHours(2).plusMinutes(30));
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(TaskOverlapException.class, () -> {
             manager.updateTask(task1);
         }, "Должно выбросить исключение при попытке обновить задачу с пересечением");
     }

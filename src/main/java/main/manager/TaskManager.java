@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface TaskManager {
-    Task createTask(String title, String description, TaskStatus status);
+    Task createTask(String title, String description, TaskStatus status) throws TaskOverlapException;
 
-    Task createTask(String title, String description, TaskStatus status, Duration duration, LocalDateTime startTime);
+    Task createTask(String title, String description, TaskStatus status, Duration duration, LocalDateTime startTime) throws TaskOverlapException;
 
     void deleteAllTasks();
 
@@ -28,17 +28,17 @@ public interface TaskManager {
 
     void addEpic(String title, String description);
 
-    void addSubTask(String title, String description, int epicId, TaskStatus status);
+    void addSubTask(String title, String description, int epicId, TaskStatus status) throws TaskOverlapException;
 
-    void addSubTask(String title, String description, int epicId, TaskStatus status, Duration duration, LocalDateTime startTime);
+    void addSubTask(String title, String description, int epicId, TaskStatus status, Duration duration, LocalDateTime startTime) throws TaskOverlapException;
 
     List<SubTask> getSubTasks(int epicId);
 
-    void updateTask(Task updatedTask);
+    void updateTask(Task updatedTask) throws TaskOverlapException;
 
     void updateEpic(Epic updatedEpic);
 
-    void updateSubTask(SubTask updatedSubTask);
+    void updateSubTask(SubTask updatedSubTask) throws TaskOverlapException;
 
     void deleteTaskById(int id);
 

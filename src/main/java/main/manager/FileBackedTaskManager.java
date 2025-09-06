@@ -141,14 +141,14 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     @Override
-    public Task createTask(String title, String description, TaskStatus status) {
+    public Task createTask(String title, String description, TaskStatus status) throws TaskOverlapException {
         Task task = super.createTask(title, description, status);
         save();
         return task;
     }
 
     @Override
-    public Task createTask(String title, String description, TaskStatus status, Duration duration, LocalDateTime startTime) {
+    public Task createTask(String title, String description, TaskStatus status, Duration duration, LocalDateTime startTime) throws TaskOverlapException {
         Task task = super.createTask(title, description, status, duration, startTime);
         save();
         return task;
@@ -161,13 +161,13 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     @Override
-    public void addSubTask(String title, String description, int epicId, TaskStatus status) {
+    public void addSubTask(String title, String description, int epicId, TaskStatus status) throws TaskOverlapException {
         super.addSubTask(title, description, epicId, status);
         save();
     }
 
     @Override
-    public void addSubTask(String title, String description, int epicId, TaskStatus status, Duration duration, LocalDateTime startTime) {
+    public void addSubTask(String title, String description, int epicId, TaskStatus status, Duration duration, LocalDateTime startTime) throws TaskOverlapException {
         super.addSubTask(title, description, epicId, status, duration, startTime);
         save();
     }
@@ -212,7 +212,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     @Override
-    public void updateTask(Task updatedTask) {
+    public void updateTask(Task updatedTask) throws TaskOverlapException {
         super.updateTask(updatedTask);
         save();
     }
@@ -224,7 +224,7 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     }
 
     @Override
-    public void updateSubTask(SubTask subTask) {
+    public void updateSubTask(SubTask subTask) throws TaskOverlapException {
         super.updateSubTask(subTask);
         save();
     }

@@ -1,6 +1,7 @@
 package manager;
 
 import main.java.main.manager.InMemoryTaskManager;
+import main.java.main.manager.TaskOverlapException;
 import main.java.main.model.Epic;
 import main.java.main.model.Task;
 import main.java.main.model.TaskStatus;
@@ -22,7 +23,7 @@ public class TimeValidationTest {
     }
 
     @Test
-    void taskWithoutTimeNotInPrioritizedList() {
+    void taskWithoutTimeNotInPrioritizedList() throws TaskOverlapException {
         Task taskWithTime = manager.createTask("С временем", "Описание", TaskStatus.NEW,
                 Duration.ofHours(1), LocalDateTime.now());
         Task taskWithoutTime = manager.createTask("Без времени", "Описание", TaskStatus.NEW);
@@ -34,7 +35,7 @@ public class TimeValidationTest {
     }
 
     @Test
-    void epicFieldsCalculatedCorrectlyWithMixedSubTasks() {
+    void epicFieldsCalculatedCorrectlyWithMixedSubTasks() throws TaskOverlapException {
         manager.addEpic("Эпик", "Описание");
         int epicId = manager.getAllEpics().get(0).getId();
 
@@ -63,7 +64,7 @@ public class TimeValidationTest {
     }
 
     @Test
-    void overlapDetectionWorksWithStreamAPI() {
+    void overlapDetectionWorksWithStreamAPI() throws TaskOverlapException {
         LocalDateTime start = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
@@ -91,7 +92,7 @@ public class TimeValidationTest {
     }
 
     @Test
-    void borderCaseOverlapDetection() {
+    void borderCaseOverlapDetection() throws TaskOverlapException {
         LocalDateTime start = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
@@ -111,7 +112,7 @@ public class TimeValidationTest {
     }
 
     @Test
-    void updateTaskMovesItInPrioritizedList() {
+    void updateTaskMovesItInPrioritizedList() throws TaskOverlapException {
         LocalDateTime start = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
@@ -132,7 +133,7 @@ public class TimeValidationTest {
     }
 
     @Test
-    void deleteTaskRemovesFromPrioritizedList() {
+    void deleteTaskRemovesFromPrioritizedList() throws TaskOverlapException {
         LocalDateTime start = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
@@ -149,7 +150,7 @@ public class TimeValidationTest {
     }
 
     @Test
-    void subTaskOverlapValidationWorksCorrectly() {
+    void subTaskOverlapValidationWorksCorrectly() throws TaskOverlapException {
         LocalDateTime start = LocalDateTime.now();
         Duration duration = Duration.ofHours(1);
 
@@ -158,7 +159,7 @@ public class TimeValidationTest {
         int epicId = manager.getAllEpics().get(0).getId();
 
         // Попытка добавить пересекающуюся подзадачу должна вызвать исключение
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(TaskOverlapException.class, () -> {
             manager.addSubTask("Пересекающаяся подзадача", "Описание", epicId, TaskStatus.NEW,
                     duration, start.plusMinutes(30));
         }, "Должно выбросить исключение при добавлении пересекающейся подзадачи");

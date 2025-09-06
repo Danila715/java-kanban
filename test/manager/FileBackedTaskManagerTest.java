@@ -2,6 +2,7 @@ package manager;
 
 import main.java.main.manager.FileBackedTaskManager;
 import main.java.main.manager.Managers;
+import main.java.main.manager.TaskOverlapException;
 import main.java.main.model.Epic;
 import main.java.main.model.SubTask;
 import main.java.main.model.Task;
@@ -18,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class FileBackedTaskManagerTest {
     private File tempFile;
@@ -49,7 +51,7 @@ public class FileBackedTaskManagerTest {
     Тест для сохранения нескольких задач, эпиков и подзадач
      */
     @Test
-    void saveMultipleTasks() throws IOException {
+    void saveMultipleTasks() throws IOException, TaskOverlapException {
         LocalDateTime startTime = LocalDateTime.of(2025, 1, 15, 10, 0);
         Duration duration = Duration.ofHours(2);
 
@@ -76,7 +78,7 @@ public class FileBackedTaskManagerTest {
     Тест для загрузки нескольких задач, эпиков и подзадач с временными полями
      */
     @Test
-    void loadMultipleTasksWithTimeFields() {
+    void loadMultipleTasksWithTimeFields() throws TaskOverlapException {
         LocalDateTime startTime = LocalDateTime.of(2025, 1, 15, 10, 0);
         Duration duration = Duration.ofHours(2);
 
@@ -113,7 +115,7 @@ public class FileBackedTaskManagerTest {
     Тест для проверки обновления статуса эпика в FileBackedTaskManager
      */
     @Test
-    void testEpicStatusUpdate() {
+    void testEpicStatusUpdate() throws TaskOverlapException {
         manager.addEpic("Эпик 1", "Описание эпика");
         manager.addSubTask("Подзадача 1", "Описание", 1, TaskStatus.DONE);
         manager.addSubTask("Подзадача 2", "Описание", 1, TaskStatus.DONE);
@@ -133,7 +135,7 @@ public class FileBackedTaskManagerTest {
     Тест для проверки удаления задач и эпиков в FileBackedTaskManager
      */
     @Test
-    void testTaskAndEpicDeletion() {
+    void testTaskAndEpicDeletion() throws TaskOverlapException {
         // Создаем задачу, эпик и подзадачу
         manager.createTask("Задача 1", "Описание", TaskStatus.NEW);
         manager.addEpic("Эпик 1", "Описание эпика");
@@ -153,7 +155,7 @@ public class FileBackedTaskManagerTest {
     Тест для проверки расчета полей эпика на основе подзадач
      */
     @Test
-    void testEpicFieldsCalculation() {
+    void testEpicFieldsCalculation() throws TaskOverlapException {
         LocalDateTime start1 = LocalDateTime.of(2025, 1, 15, 10, 0);
         LocalDateTime start2 = LocalDateTime.of(2025, 1, 15, 14, 0);
         Duration duration1 = Duration.ofHours(2);
@@ -177,7 +179,7 @@ public class FileBackedTaskManagerTest {
     Тест для проверки сохранения приоритетного списка задач
      */
     @Test
-    void testPrioritizedTasksSaveAndLoad() {
+    void testPrioritizedTasksSaveAndLoad() throws TaskOverlapException {
         LocalDateTime now = LocalDateTime.of(2025, 1, 15, 10, 0);
 
         manager.createTask("Задача 3", "Описание", TaskStatus.NEW, Duration.ofHours(1), now.plusHours(2));
@@ -198,7 +200,7 @@ public class FileBackedTaskManagerTest {
     Тест проверки пересечений после загрузки из файла
      */
     @Test
-    void testOverlapValidationAfterLoad() {
+    void testOverlapValidationAfterLoad() throws TaskOverlapException {
         LocalDateTime now = LocalDateTime.of(2025, 1, 15, 10, 0);
         Duration duration = Duration.ofHours(1);
 
@@ -207,14 +209,12 @@ public class FileBackedTaskManagerTest {
 
         FileBackedTaskManager loadedManager = FileBackedTaskManager.loadFromFile(tempFile);
 
-        // Попытка добавить пересекающуюся задачу должна вызвать исключение
-        try {
+        // Попытка добавить пересекающуюся задачу должна вызвать TaskOverlapException
+        TaskOverlapException exception = assertThrows(TaskOverlapException.class, () -> {
             loadedManager.createTask("Пересекающаяся задача", "Описание", TaskStatus.NEW,
                     duration, now.plusMinutes(30));
-            assert false : "Должно было выброситься исключение при пересечении";
-        } catch (IllegalArgumentException e) {
-            // Ожидаемое поведение
-            assertEquals("Задача пересекается по времени с существующими задачами", e.getMessage());
-        }
+        });
+
+        assertEquals("Задача пересекается по времени с существующими задачами", exception.getMessage());
     }
 }
