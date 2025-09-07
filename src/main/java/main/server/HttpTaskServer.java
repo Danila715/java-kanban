@@ -24,8 +24,8 @@ public class HttpTaskServer {
         this.taskManager = Managers.getDefaultFileBacked(dataFile); // Или getDefault() для InMemory
 
         this.gson = new GsonBuilder()
-                .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter()) // Ваш существующий адаптер
-                .registerTypeAdapter(Duration.class, new DurationAdapter()) // НОВЫЙ адаптер для Duration
+                .registerTypeAdapter(LocalDateTime.class, new UnifiedDateTimeAdapter()) // Ваш существующий адаптер
+                .registerTypeAdapter(Duration.class, new UnifiedDateTimeAdapter()) // НОВЫЙ адаптер для Duration
                 .create();
 
         // Создание сервера
