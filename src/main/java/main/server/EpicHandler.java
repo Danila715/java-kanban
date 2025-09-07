@@ -92,7 +92,6 @@ public class EpicHandler extends BaseHttpHandler {
         String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
         Epic epic = gson.fromJson(body, Epic.class);
-        // EpicManager обычно генерирует ID внутри addEpic
         taskManager.addEpic(epic.getTitle(), epic.getDescription());
         sendText(exchange, "Эпик создан", 201);
     }
@@ -102,12 +101,11 @@ public class EpicHandler extends BaseHttpHandler {
         String body = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
         Epic epic = gson.fromJson(body, Epic.class);
-        // Убедимся, что ID из пути совпадает с ID в теле запроса
         if (epic.getId() != id) {
             sendText(exchange, "ID в пути и теле запроса не совпадают", 400);
             return;
         }
-        taskManager.updateEpic(epic); // Может выбросить NotFoundException
+        taskManager.updateEpic(epic);
         sendText(exchange, "Эпик обновлен", 201);
     }
 
@@ -123,8 +121,7 @@ public class EpicHandler extends BaseHttpHandler {
     }
 
     private void handleGetSubtasksByEpicId(HttpExchange exchange, int epicId) throws IOException, NotFoundException {
-        // Проверим, существует ли эпик
-        taskManager.getEpicById(epicId); // Может выбросить NotFoundException
+        taskManager.getEpicById(epicId);
 
         List<SubTask> subTasks = taskManager.getSubTasks(epicId);
         String responseJson = gson.toJson(subTasks);

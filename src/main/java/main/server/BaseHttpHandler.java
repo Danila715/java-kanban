@@ -3,11 +3,8 @@ package main.java.main.server;
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
-import main.java.main.manager.NotFoundException;
-import main.java.main.manager.TaskOverlapException;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
 public abstract class BaseHttpHandler implements HttpHandler {
@@ -37,12 +34,11 @@ public abstract class BaseHttpHandler implements HttpHandler {
         sendText(h, "Внутренняя ошибка сервера: " + message, 500);
     }
 
-    // Метод для извлечения ID из пути запроса, например, из "/tasks/1"
     protected int getIdFromPath(String path) throws NumberFormatException {
         String[] parts = path.split("/");
         if (parts.length > 2) {
-            return Integer.parseInt(parts[2]); // parts[0] - "", parts[1] - "tasks", parts[2] - "1"
+            return Integer.parseInt(parts[2]);
         }
-        return -1; // Или выбросить исключение, если ID обязателен
+        return -1;
     }
 }

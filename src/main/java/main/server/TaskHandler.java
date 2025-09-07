@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 
 public class TaskHandler extends BaseHttpHandler {
     private final TaskManager taskManager;
@@ -25,7 +24,7 @@ public class TaskHandler extends BaseHttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         try {
             String method = exchange.getRequestMethod();
-            String path = exchange.getRequestURI().getPath(); // Например, /tasks или /tasks/1
+            String path = exchange.getRequestURI().getPath();
 
             switch (method) {
                 case "GET":
@@ -86,8 +85,6 @@ public class TaskHandler extends BaseHttpHandler {
         Task task = gson.fromJson(body, Task.class);
 
         if (task.getId() == 0) { // Создание новой задачи
-            // Предполагаем, что TaskManager сам генерирует ID или мы передаем 0 и он его заменит
-            // Если TaskManager требует ID, нужно адаптировать логику
             Task createdTask = taskManager.createTask(task.getTitle(), task.getDescription(), task.getStatus(), task.getDuration(), task.getStartTime());
             String responseJson = gson.toJson(createdTask);
             sendText(exchange, responseJson, 201);

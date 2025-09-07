@@ -4,11 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import main.java.main.manager.InMemoryTaskManager;
 import main.java.main.manager.TaskManager;
+import main.java.main.manager.TaskOverlapException;
 import main.java.main.model.Epic;
 import main.java.main.model.SubTask;
 import main.java.main.model.Task;
 import main.java.main.model.TaskStatus;
-import main.java.main.server.*;
+import main.java.main.server.DurationAdapter;
+import main.java.main.server.HttpTaskServer;
+import main.java.main.server.LocalDateTimeAdapter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +24,8 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class HttpTaskServerTest {
     private static final String BASE_URL = "http://localhost:8080";
@@ -44,7 +48,10 @@ public class HttpTaskServerTest {
         server.start();
 
         // Создаем HTTP клиент для тестов
-        client = HttpClient.newDefaultClient();
+        client = HttpClient.newHttpClient();
+
+        // ВАЖНО: используем TaskManager от сервера для проверок!
+        taskManager = server.getTaskManager();
     }
 
     @AfterEach
@@ -77,7 +84,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldGetAllTasks() throws IOException, InterruptedException {
+    void shouldGetAllTasks() throws IOException, InterruptedException, TaskOverlapException {
         // Создаем тестовые задачи через менеджер
         Task task1 = taskManager.createTask("Задача 1", "Описание 1", TaskStatus.NEW);
         Task task2 = taskManager.createTask("Задача 2", "Описание 2", TaskStatus.IN_PROGRESS);
@@ -98,7 +105,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldGetTaskById() throws IOException, InterruptedException {
+    void shouldGetTaskById() throws IOException, InterruptedException, TaskOverlapException {
         Task task = taskManager.createTask("Тестовая задача", "Описание", TaskStatus.NEW);
         int taskId = task.getId();
 
@@ -128,7 +135,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldUpdateTask() throws IOException, InterruptedException {
+    void shouldUpdateTask() throws IOException, InterruptedException, TaskOverlapException {
         Task task = taskManager.createTask("Оригинальная задача", "Описание", TaskStatus.NEW);
         int taskId = task.getId();
 
@@ -151,7 +158,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldDeleteTask() throws IOException, InterruptedException {
+    void shouldDeleteTask() throws IOException, InterruptedException, TaskOverlapException {
         Task task = taskManager.createTask("Задача для удаления", "Описание", TaskStatus.NEW);
         int taskId = task.getId();
 
@@ -167,7 +174,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldDeleteAllTasks() throws IOException, InterruptedException {
+    void shouldDeleteAllTasks() throws IOException, InterruptedException, TaskOverlapException {
         taskManager.createTask("Задача 1", "Описание 1", TaskStatus.NEW);
         taskManager.createTask("Задача 2", "Описание 2", TaskStatus.NEW);
 
@@ -183,7 +190,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldReturn406ForOverlappingTasks() throws IOException, InterruptedException {
+    void shouldReturn406ForOverlappingTasks() throws IOException, InterruptedException, TaskOverlapException {
         LocalDateTime startTime = LocalDateTime.of(2025, 1, 15, 10, 0);
         Duration duration = Duration.ofHours(2);
 
@@ -308,7 +315,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldGetSubtasksByEpicId() throws IOException, InterruptedException {
+    void shouldGetSubtasksByEpicId() throws IOException, InterruptedException, TaskOverlapException {
         taskManager.addEpic("Эпик с подзадачами", "Описание");
         Epic epic = taskManager.getAllEpics().get(0);
         int epicId = epic.getId();
@@ -358,7 +365,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldGetAllSubTasks() throws IOException, InterruptedException {
+    void shouldGetAllSubTasks() throws IOException, InterruptedException, TaskOverlapException {
         taskManager.addEpic("Эпик", "Описание");
         Epic epic = taskManager.getAllEpics().get(0);
         int epicId = epic.getId();
@@ -381,7 +388,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldGetSubTaskById() throws IOException, InterruptedException {
+    void shouldGetSubTaskById() throws IOException, InterruptedException, TaskOverlapException {
         taskManager.addEpic("Эпик", "Описание");
         Epic epic = taskManager.getAllEpics().get(0);
         int epicId = epic.getId();
@@ -404,7 +411,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldUpdateSubTask() throws IOException, InterruptedException {
+    void shouldUpdateSubTask() throws IOException, InterruptedException, TaskOverlapException {
         taskManager.addEpic("Эпик", "Описание");
         Epic epic = taskManager.getAllEpics().get(0);
         int epicId = epic.getId();
@@ -433,7 +440,7 @@ public class HttpTaskServerTest {
     }
 
     @Test
-    void shouldDeleteSubTask() throws IOException, InterruptedException {
+    void shouldDeleteSubTask() throws IOException, InterruptedException, TaskOverlapException {
         taskManager.addEpic("Эпик", "Описание");
         Epic epic = taskManager.getAllEpics().get(0);
         int epicId = epic.getId();
@@ -456,7 +463,7 @@ public class HttpTaskServerTest {
     // ======================== ТЕСТЫ ДЛЯ HISTORY ========================
 
     @Test
-    void shouldGetHistory() throws IOException, InterruptedException {
+    void shouldGetHistory() throws IOException, InterruptedException, TaskOverlapException {
         // Создаем задачи и добавляем их в историю
         Task task = taskManager.createTask("Задача", "Описание", TaskStatus.NEW);
         taskManager.addEpic("Эпик", "Описание");
@@ -480,7 +487,7 @@ public class HttpTaskServerTest {
     // ======================== ТЕСТЫ ДЛЯ PRIORITIZED ========================
 
     @Test
-    void shouldGetPrioritizedTasks() throws IOException, InterruptedException {
+    void shouldGetPrioritizedTasks() throws IOException, InterruptedException, TaskOverlapException {
         LocalDateTime now = LocalDateTime.of(2025, 1, 15, 10, 0);
 
         taskManager.createTask("Задача 2", "Описание", TaskStatus.NEW,
@@ -497,7 +504,7 @@ public class HttpTaskServerTest {
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
         assertEquals(200, response.statusCode(), "Статус ответа должен быть 200");
-        assertEquals(2, taskManager.getPrioritizedTasks().size(), "Приоритезированный список должен содержать 2 задачи");
+        assertEquals(2, taskManager.getPrioritizedTasks().size(), "Приоритетный список должен содержать 2 задачи");
     }
 
     // ======================== ТЕСТЫ НА НЕКОРРЕКТНЫЕ ЗАПРОСЫ ========================
@@ -535,7 +542,7 @@ public class HttpTaskServerTest {
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        assertEquals(500, response.statusCode(), "Статус ответа должен быть 500 для некорректного формата ID");
+        assertEquals(404, response.statusCode(), "Статус ответа должен быть 404 для некорректного формата ID");
     }
 
     @Test
@@ -565,8 +572,8 @@ public class HttpTaskServerTest {
         assertEquals(duration, createdSubTask.getDuration(), "Продолжительность должна совпадать");
         assertEquals(startTime, createdSubTask.getStartTime(), "Время начала должно совпадать");
 
-        // Проверяем, что подзадача попала в приоритезированный список
+        // Проверяем, что подзадача попала в приоритетный список
         assertEquals(1, taskManager.getPrioritizedTasks().size(),
-                "Подзадача с временем должна быть в приоритезированном списке");
+                "Подзадача с временем должна быть в приоритетном списке");
     }
 }

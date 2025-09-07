@@ -21,7 +21,9 @@ public interface TaskManager {
     void deleteAllSubTasks();
 
     Task getTaskById(int id) throws NotFoundException;
+
     Epic getEpicById(int id) throws NotFoundException;
+
     SubTask getSubTaskById(int id) throws NotFoundException;
 
     void addEpic(String title, String description);

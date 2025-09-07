@@ -136,13 +136,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
         } catch (IOException e) { // Это поймает FileNotFoundException
             System.err.println("Ошибка ввода-вывода при загрузке файла: " + file.getPath() + ". " + e.getMessage());
             // Возвращаем пустой менеджер вместо выбрасывания исключения
-            // throw new ManagerLoadException("Ошибка при загрузке файла: " + file.getPath(), e);
             return manager;
-        } catch (Exception e) { // Поймаем NumberFormatException, IllegalArgumentException и другие
+        } catch (Exception e) {
             System.err.println("Ошибка парсинга данных из файла: " + file.getPath() + ". " + e.getMessage());
             e.printStackTrace();
             // Возвращаем пустой менеджер вместо выбрасывания исключения
-            // throw new ManagerLoadException("Ошибка парсинга данных из файла: " + file.getPath(), e);
             return manager;
         }
         return manager;

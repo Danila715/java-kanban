@@ -168,8 +168,6 @@ public class InMemoryTaskManager implements TaskManager {
     }
 
     /*Обновление nextId, чтобы избежать конфликтов*/
-    // Note: This method seems unused or potentially problematic in its original form.
-    // It's kept as is based on the provided file.
     public Task createTaskWithId(String title, String description, int id, TaskStatus status) throws TaskOverlapException {
         return createTaskWithId(title, description, id, status, Duration.ZERO, null);
     }
@@ -286,7 +284,6 @@ public class InMemoryTaskManager implements TaskManager {
             throw new NotFoundException("Подзадача с ID " + subTask.getId() + " не найдена для обновления");
         }
         if (subTask.getId() == subTask.getEpicId()) {
-            // Consider throwing a specific exception or handling this case differently
             return;
         }
 
@@ -299,7 +296,7 @@ public class InMemoryTaskManager implements TaskManager {
         prioritizedTasks.remove(oldSubTask);
         subTasks.put(subTask.getId(), new SubTask(subTask));
         Epic epic = epics.get(subTask.getEpicId());
-        if (epic != null) { // Defensive check, though epic should exist if subtask was valid
+        if (epic != null) {
             updateEpicStatus(epic);
             updateEpicFields(epic);
         }
@@ -418,7 +415,7 @@ public class InMemoryTaskManager implements TaskManager {
                                 tasks.values().stream().filter(task -> task.getId() != newTask.getId()),
                                 subTasks.values().stream().filter(task -> task.getId() != newTask.getId())
                         ),
-                        Stream.empty() // This part seems redundant from the original, kept as is.
+                        Stream.empty()
                 )
                 .anyMatch(existingTask -> checkTaskOverlap(newTask, existingTask));
     }
