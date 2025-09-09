@@ -63,8 +63,21 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
     //Загрузка менеджера из файла
     public static FileBackedTaskManager loadFromFile(File file) {
         FileBackedTaskManager manager = new FileBackedTaskManager(file);
+
+        // Проверяем, существует ли файл
+        if (!file.exists()) {
+            // Если файла нет, просто возвращаем новый пустой менеджер
+            // Файл будет создан при первом вызове save()
+            System.out.println("Файл " + file.getPath() + " не найден. Будет создан новый менеджер задач.");
+            return manager;
+        }
+
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line = reader.readLine(); // Пропускаем заголовок
+            if (line == null) {
+                System.out.println("Файл " + file.getPath() + " пустой. Будет создан новый менеджер задач.");
+                return manager; // Файл пустой
+            }
             while ((line = reader.readLine()) != null) {
                 if (!line.trim().isEmpty()) {
                     String[] parts = line.split(",", 8); // Увеличили количество частей для новых полей
@@ -74,13 +87,11 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     TaskStatus status = TaskStatus.valueOf(parts[3]);
                     String description = parts[4];
                     int epicId = parts.length > 5 && !parts[5].isEmpty() ? Integer.parseInt(parts[5]) : 0;
-
                     //Парсим новые поля
                     Duration duration = parts.length > 6 && !parts[6].isEmpty() ?
                             Duration.ofMinutes(Long.parseLong(parts[6])) : Duration.ZERO;
                     LocalDateTime startTime = parts.length > 7 && !parts[7].isEmpty() ?
                             LocalDateTime.parse(parts[7], DATE_TIME_FORMATTER) : null;
-
                     switch (type) {
                         case "TASK":
                             Task task = new Task(title, description, id, status, duration, startTime);
@@ -118,14 +129,19 @@ public class FileBackedTaskManager extends InMemoryTaskManager {
                     }
                 }
             }
-
             //Обновляем поля всех эпиков после загрузки
             for (Epic epic : manager.epics.values()) {
                 manager.updateEpicFields(epic);
             }
-
-        } catch (IOException e) {
-            throw new ManagerLoadException("Ошибка при загрузке файла: " + file.getPath(), e);
+        } catch (IOException e) { // Это поймает FileNotFoundException
+            System.err.println("Ошибка ввода-вывода при загрузке файла: " + file.getPath() + ". " + e.getMessage());
+            // Возвращаем пустой менеджер вместо выбрасывания исключения
+            return manager;
+        } catch (Exception e) {
+            System.err.println("Ошибка парсинга данных из файла: " + file.getPath() + ". " + e.getMessage());
+            e.printStackTrace();
+            // Возвращаем пустой менеджер вместо выбрасывания исключения
+            return manager;
         }
         return manager;
     }

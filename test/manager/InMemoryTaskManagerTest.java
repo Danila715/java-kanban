@@ -1,6 +1,7 @@
 package manager;
 
 import main.java.main.manager.InMemoryTaskManager;
+import main.java.main.manager.NotFoundException;
 import main.java.main.manager.TaskOverlapException;
 import main.java.main.model.Epic;
 import main.java.main.model.SubTask;
@@ -120,9 +121,14 @@ public class InMemoryTaskManagerTest {
         // Удаляем подзадачу
         manager.deleteSubTask(subTaskId);
 
-        // Проверяем, что подзадача удалена из менеджера и истории
-        assertNull(manager.getSubTaskById(subTaskId), "Подзадача должна быть удалена из менеджера");
-        assertFalse(manager.getHistory().stream().anyMatch(task -> task.getId() == subTaskId), "Подзадача не должна оставаться в истории");
+        // Проверяем, что подзадача удалена из менеджера (теперь ожидаем исключение)
+        assertThrows(NotFoundException.class, () -> {
+            manager.getSubTaskById(subTaskId);
+        }, "Должна быть выброшена ошибка NotFoundException при попытке получить удаленную подзадачу");
+
+        // Проверяем, что подзадача не осталась в истории
+        assertFalse(manager.getHistory().stream().anyMatch(task -> task.getId() == subTaskId),
+                "Подзадача не должна оставаться в истории");
     }
 
     @Test
